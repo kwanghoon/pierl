@@ -4,6 +4,63 @@
 
 -define(PI, pierl).
 
+%% Main =
+%%   new printerChan.
+%%   new forwarderChan.
+%%   new ackChan.
+%%   ( spawn Printer(printerChan)
+%%     | spawn Forwarder(forwarderChan)
+%%     | spawn Sender(senderChan, forwarderChan)
+%%     | send forwarderChan<ackChan, printerChan>
+%%     | delegate ackChan->senderChan )
+%%
+%% Forwarder(c) =
+%%   recv c<ackChan, out>.(
+%%     send ackChan<ack>
+%%     | ForwarderLoop(c, out)
+%%   )
+%%
+%% ForwarderLoop(c, out) =
+%%   recv c<deleg chan>.(
+%%     delegate chan->out
+%%     | ForwarderLoop(c, out)
+%%   )
+%%   + recv c<m>.(
+%%     send out<m>
+%%     | ForwarderLoop(c, out)
+%%   )
+%%
+%% Sender(self, forwarder) =
+%%   recv self<deleg ackChan>.(
+%%     recv ackChan<ack>.(
+%%       new errorChan.
+%%       delegate errorChan->forwarder
+%%       | SenderBody(forwarder, errorChan, 2)
+%%     )
+%%   )
+%%
+%% SenderBody(print, err, 0) = send print<"done">
+%% SenderBody(print, err, n) =
+%%   ( send print<"remaining " ++ (n-1)>
+%%     | SenderBody(print, err, n-1)
+%%   )
+%%   + ( send err<"failed">
+%%       | SenderBody(print, err, n)
+%%     )
+%%
+%% Printer(own) =
+%%   recv own<deleg err>. PrinterLoop(own, err)
+%%
+%% PrinterLoop(print, err) =
+%%   recv print<m>.(
+%%     PrintSideEffect(m)
+%%     | PrinterLoop(print, err)
+%%   )
+%%   + recv err<e>.(
+%%     PrintErrorSideEffect(e)
+%%     | PrinterLoop(print, err)
+%%   )
+
 forwarder(OwnChan) ->
     ?PI:recv(OwnChan, fun ({AckChan, OutputChan}) ->
         ?PI:send(AckChan, ack),
