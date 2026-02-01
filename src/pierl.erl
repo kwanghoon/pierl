@@ -15,6 +15,24 @@
 %%% * it can't be distributed
 %%% * delegation can suffer from race conditions
 %%% but it's definitely a start!
+%%%
+%%% Reference syntax (asynchronous pi-calculus with ownership):
+%%%   P ::= 0                       | send a(<v>)
+%%%       | recv a(x).P            | spawn P
+%%%       | new a.P                | P | Q
+%%%       | delegate a->b.P
+%%%
+%%%   v ::= a | b | ... (channel names with single owners)
+%%%
+%%%   Prog ::= new a1....new an.(P1 | ... | Pm)
+%%%
+%%% Structural congruence examples:
+%%%   P | Q ≡ Q | P
+%%%   P | 0 ≡ P
+%%%   new a.new b.P ≡ new b.new a.P
+%%%
+%%% Ownership invariant:
+%%%   owner(a) must match the calling process before send/recv/delegate
 -module(pierl).
 
 -include("pierl.hrl").
